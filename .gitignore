@@ -1,3 +1,4 @@
 *~
 *.pyc
 xpense/flockapp/flockapplib/flockappsecret.py
+xpense/db.sqlite3
