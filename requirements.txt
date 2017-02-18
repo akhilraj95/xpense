@@ -1,2 +1,4 @@
 django
 pyjwt
+requests
+fpdf
