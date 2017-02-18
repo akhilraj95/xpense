@@ -1,3 +1,4 @@
+
 """
 Django settings for xpense project.
 
@@ -25,7 +26,7 @@ SECRET_KEY = '%j$nakvdwc@v26$we!_wc0q%&4x9l5qipy)bwpk@ig8%w1y8oj'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["133f455a.ngrok.io","127.0.0.1"]
+ALLOWED_HOSTS = ["da91dd17.ngrok.io","127.0.0.1"]
 
 
 # Application definition

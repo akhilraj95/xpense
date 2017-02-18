@@ -19,6 +19,9 @@ def events(request):
                 return HttpResponse("OK")
             else:
                 raise Http404("testing")
+        elif(pjson['name']=='chat.receiveMessage'):
+            if(action.receiveMessage(pjson)):
+                return HttpResponse("OK")
         else:
             print(request.body)
     raise Http404("testing")
