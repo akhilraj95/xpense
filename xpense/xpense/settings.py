@@ -26,7 +26,7 @@ SECRET_KEY = '%j$nakvdwc@v26$we!_wc0q%&4x9l5qipy)bwpk@ig8%w1y8oj'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["75f2da71.ngrok.io","127.0.0.1"]
+ALLOWED_HOSTS = ["75f2da71.ngrok.io","127.0.0.1","ec2-35-154-170-114.ap-south-1.compute.amazonaws.com"]
 
 
 # Application definition
