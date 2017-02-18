@@ -24,13 +24,13 @@ import flockappsecret as secret
 import urllib,urllib2
 from django.db.models import Q
 import exports
-
+import json
 
 # Save userId and token in to db on install. sends a welcome message to the user.
 def appinstall(pjson):
     try:
         userId = pjson['userId']
-        token = pjson['userId']
+        token = pjson['token']
         u = models.User(userId = userId, token=token)
         u.save()
         bot_sendMessage(userId,"Hey there, I am XpenseBot. I can assit you in drafting your expense report for your travel, managing group budget and managing group expenses.Go ahead do your job, I will worry about the expenses")
@@ -59,6 +59,24 @@ def receiveMessage(pjson):
         return True
     except:
         return False
+
+def getMembers(group_id,user):
+    data = [('groupId',str(group_id)),('token',str(user.token))]
+    url = 'https://api.flock.co/v1/groups.getMembers'
+    req = urllib2.Request(url, headers={'Content-Type' : 'application/x-www-form-urlencoded'})
+    print('GETTING MEMBERS('+group_id+'):')
+    result = urllib2.urlopen(req, urllib.urlencode(data))
+    content = result.read()
+    return json.loads(content)
+
+def sendGroupMessage(chatId,user,text):
+    data = [('to',str(chatId)),('token',str(user.token)),('text',str(text))]
+    url = 'https://api.flock.co/v1/chat.sendMessage'
+    req = urllib2.Request(url, headers={'Content-Type' : 'application/x-www-form-urlencoded'})
+    print('SENDINGMESSAGE('+chatId+'):')
+    result = urllib2.urlopen(req, urllib.urlencode(data))
+    content = result.read()
+    return
 
 
 ###############################################################################################

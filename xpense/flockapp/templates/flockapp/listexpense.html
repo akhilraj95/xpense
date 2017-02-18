@@ -1,0 +1,85 @@
+<html>
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
+  <script src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
+
+
+  <script>
+  function myFunction() {
+
+    var http = new XMLHttpRequest();
+    var url = "sendmessage";
+    var message=encodeURIComponent(document.getElementById("message").value);
+    var chatId=encodeURIComponent(document.getElementById("chatId").value);
+    var userId=encodeURIComponent(document.getElementById("userId").value);
+    var parameters="message="+message+"&chatId="+chatId+"&userId="+userId;
+    http.open("POST", url, true);
+    //Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    http.setRequestHeader("Content-length", parameters.length);
+    http.setRequestHeader("Connection", "close");
+
+    http.onreadystatechange = function() {//Call a function when the state changes.
+    	if(http.readyState == 4 && http.status == 200) {
+    		flock.close();
+    	}
+    }
+    http.send(parameters);
+  }
+  </script>
+
+
+
+</head>
+<body>
+  <br/>
+  <div class="container">
+
+        <h5>Expense list : {{current_track.name}}</h5>
+        <table>
+          <thead>
+            <tr>
+                <th data-field="paidby">Paid by</th>
+                <th data-field="purpose">purpose</th>
+                <th data-field="amount">amount</th>
+                <th data-field="time">time</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% if chatexpense_list %}
+                      {% for expense in chatexpense_list %}
+                      <tr>
+                        <td>{{expense.paidbywhom}}</td>
+                        <td>{{expense.purpose}}</td>
+                        <td>{{expense.currency.abbr}}&nbsp{{expense.amount}}</td>
+                        <td>{{expense.timestamp}}</td>
+                      </tr>
+                      {% endfor %}
+              {% endif %}
+          </tbody>
+        </table>
+
+        <input type="hidden" value="{{message}}" id="message"/>
+        <input type="hidden" value="{{userId}}" id="userId"/>
+        <input type="hidden" value="{{chatId}}" id="chatId"/>
+
+        <div class="row">
+              <div class="center-align">
+                  <input type="button" value="send to group" onclick="myFunction()"/>
+              </div>
+        </div>
+  </div>
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js'></script>
+  <script>
+    $(document).ready(function() {
+      $('select').material_select();
+    });
+  </script>
+</body>
+</html>
