@@ -160,7 +160,10 @@ def generatereport(request):
     trackId = request.POST['trackId']
     link_to_report = export.generate_report_2(trackId,chatId,userId)
     user = User.objects.get(userId=str(userId))
-    action.sendGroupMessage(chatId,user,link_to_report)
+    current_chat = Chat.objects.get(chatId=str(chatId))
+    current_track = Chattrack.objects.get(user = current_chat,id= str(trackId))
+    #action.sendGroupMessage(chatId,user,'<flockml><a href="'+link_to_report+'">'+current_track.name+' pdf</a></flockml>')
+    action.sendAttachment(chatId,user,link_to_report,current_track.name)
     return HttpResponse('ok')
 
 @csrf_exempt

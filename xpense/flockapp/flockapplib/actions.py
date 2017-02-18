@@ -78,6 +78,19 @@ def sendGroupMessage(chatId,user,text):
     content = result.read()
     return
 
+def sendAttachment(chatId,user,text,name):
+    fil = [{"downloads": [{ "src": str(text) },]}]
+    data = [('to',str(chatId)),('token',str(user.token)),('text',name+'_report'),('attachments',fil)]
+    url = 'https://api.flock.co/v1/chat.sendMessage'
+    req = urllib2.Request(url, headers={'Content-Type' : 'application/x-www-form-urlencoded'})
+    print('SENDINGMESSAGE('+chatId+'):')
+    print(data)
+    print(urllib.urlencode(data))
+    result = urllib2.urlopen(req, urllib.urlencode(data))
+    content = result.read()
+    return
+    return
+
 
 ###############################################################################################
 ## BOT ACTIONS
