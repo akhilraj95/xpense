@@ -2,6 +2,7 @@ from fpdf import FPDF, HTMLMixin
 from .. import models
 import actions
 import flockappsecret as secret
+import datetime
 
 class MyFPDF(FPDF, HTMLMixin):
     pass
@@ -134,10 +135,17 @@ def generate_report_2(chattrackId,chatId,userId):
     </table>
     <hr>
     <p>I hereby certify, to the best of my knowledge and belief, that (1) all information contained on this report is correct and (2) all expenses claimed on this report are based on actual costs incurred and are consistent with Company/Operations/Division procedures and the instructions on the reverse side of this form.</p>
-    <p>Employee signature:___________________</p>s
+    <p>Employee signature:___________________</p>
     """
+
     pdf=MyFPDF()
     pdf.add_page()
     pdf.write_html(html)
-    pdf.output('media/'+chatId+'.pdf','F')
-    return secret.get_url()+'/media/'+chatId+'.pdf'
+    bills = models.Bills.objects.filter(track=Chattrack)
+    for b in bills:
+        pdf.add_page()
+        html = """<br/><br/><center><A HREF="http://www.mousevspython.com"><img src='"""+b.image.url[1:]+"""' width="400" height="400"></A></center>"""
+        pdf.write_html(html)
+    tim = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")
+    pdf.output('media/'+Chattrack.name+str(tim)+'.pdf','F')
+    return secret.get_url()+'/media/'+Chattrack.name+str(tim)+'.pdf'

@@ -24,6 +24,17 @@ def events(request):
         # elif(pjson['name']=='chat.receiveMessage'):
         #     if(action.receiveMessage(pjson)):
         #         return HttpResponse("OK")
+        elif(pjson['name']=='client.messageAction'):
+            print(pjson)
+            user = User.objects.get(userId=str(pjson['userId']))
+            message_uni = pjson['messageUids']
+            message = []
+            message.append(str(message_uni[0]))
+            print(str(pjson['chat']))
+            print(user)
+            print(message)
+            action.fetchMessage(str(pjson['chat']),user,message)
+            return HttpResponse("""{"text": "Saved the bill"}""")
         else:
             print(request.body)
     raise Http404("testing")

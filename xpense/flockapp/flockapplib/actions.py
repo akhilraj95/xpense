@@ -26,6 +26,11 @@ from django.db.models import Q
 import exports
 import json
 
+
+import tempfile
+from django.core import files
+
+
 # Save userId and token in to db on install. sends a welcome message to the user.
 def appinstall(pjson):
     try:
@@ -78,6 +83,8 @@ def sendGroupMessage(chatId,user,text):
     content = result.read()
     return
 
+
+
 def sendAttachment(chatId,user,text,name):
     fil = [{"downloads": [{ "src": str(text) },]}]
     data = [('to',str(chatId)),('token',str(user.token)),('text',name+'_report'),('attachments',fil)]
@@ -89,6 +96,34 @@ def sendAttachment(chatId,user,text,name):
     result = urllib2.urlopen(req, urllib.urlencode(data))
     content = result.read()
     return
+
+def fetchMessage(group_id,user,uid):
+    data = [('chat',str(group_id)),('token',str(user.token)),('uids',uid)]
+    url = 'https://api.flock.co/v1/chat.fetchMessages'
+    req = urllib2.Request(url, headers={'Content-Type' : 'application/x-www-form-urlencoded'})
+    print('GETTING MEMBERS('+group_id+'):')
+    result = urllib2.urlopen(req, urllib.urlencode(data))
+    content = result.read()
+    content = json.loads(content)
+    print(content)
+    image_url = content[0]['attachments'][0]['downloads'][0]['src']
+    file_name = content[0]['attachments'][0]['downloads'][0]['filename']
+    request = requests.get(image_url, stream=True)
+    # Was the request OK?
+    if request.status_code != requests.codes.ok:
+        return
+    lf = tempfile.NamedTemporaryFile()
+    for block in request.iter_content(1024 * 8):
+        if not block:
+            break
+        lf.write(block)
+
+    current_chat = models.Chat.objects.filter(chatId = str(group_id))
+    current_track = models.Chattrack.objects.filter(user = current_chat,active=True)
+    if(len(current_track)!=0):
+        image = models.Bills(track=current_track[0])
+        image.image.save(file_name, files.File(lf))
+        image.save()
     return
 
 

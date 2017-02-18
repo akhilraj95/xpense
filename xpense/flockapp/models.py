@@ -38,6 +38,9 @@ class ChatExpense(models.Model):
     def __str__(self):
         return self.track.name+' '+self.purpose+' '+str(self.amount)
 
+class Bills(models.Model):
+    image = models.ImageField()
+    track = models.ForeignKey('Chattrack', default = None , blank = True)
 
 class Currency(models.Model):
     name = models.CharField(max_length=20)
