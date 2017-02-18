@@ -64,8 +64,9 @@ def generate_report(trk,usr):
 
 def generate_report_2(chattrackId,chatId,userId):
     user = models.User.objects.get(userId=str(userId))
-    group_members = actions.getMembers(chatId,user)
-    print(group_members)
+    if(str(chatId)[0]=='g'):
+        group_members = actions.getMembers(chatId,user)
+        print(group_members)
     Chat = models.Chat.objects.get(chatId=str(chatId))
     Chattrack = models.Chattrack.objects.get(id=chattrackId,user = Chat)
     html = """
@@ -85,16 +86,24 @@ def generate_report_2(chattrackId,chatId,userId):
     total_dic = {}
 
 
-
-    ###################################list of employees in group per currency
-    for member in group_members:
+    if(str(chatId)[0]=='g'):
+        ###################################list of employees in group per currency
+        for member in group_members:
+            for cur in cur_qs:
+                ex_qs = models.ChatExpense.objects.filter(track = Chattrack,currency=cur,paidbywhom=member['firstName']+' '+member['lastName'])
+                sum = 0.0
+                for ex in ex_qs:
+                    sum = sum + ex.amount
+                if(sum!=0):
+                    html = html+"""<tr><td>"""+member['firstName']+' '+member['lastName']+"""</td><td>"""+cur.abbr+' '+str(sum)+"""</td></tr>"""
+    else:
         for cur in cur_qs:
-            ex_qs = models.ChatExpense.objects.filter(track = Chattrack,currency=cur,paidbywhom=member['firstName']+' '+member['lastName'])
+            ex_qs = models.ChatExpense.objects.filter(track = Chattrack,currency=cur)
             sum = 0.0
             for ex in ex_qs:
                 sum = sum + ex.amount
             if(sum!=0):
-                html = html+"""<tr><td>"""+member['firstName']+' '+member['lastName']+"""</td><td>"""+cur.abbr+' '+str(sum)+"""</td></tr>"""
+                html = html+"""<tr><td>"""+user.name+"""</td><td>"""+cur.abbr+' '+str(sum)+"""</td></tr>"""
 
     html = html+ """
     </tbody>

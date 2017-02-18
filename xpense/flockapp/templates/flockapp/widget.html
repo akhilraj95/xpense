@@ -71,6 +71,15 @@
               <label>Paid by</label>
             </div>
           </div>
+      {% else%}
+        <div class="row">
+          <div class="input-field col s12">
+            <select id='paidby'>
+                        <option value="{{username}}" selected>{{username}}</option>
+            </select>
+            <label>Paid by</label>
+          </div>
+        </div>
       {% endif %}
 
       <div class="input-field col s12">

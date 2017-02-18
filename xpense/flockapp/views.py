@@ -112,12 +112,14 @@ def widget(request):
                 return render(request, 'flockapp/starttrack.html', context)
             else:
                 user = User.objects.get(userId = userId)
+                context['chatId'] = current_track[0].user.chatId
+                context['userId'] = str(userId)
                 if(str(chat_id)[0]=='g'):
                     #group
                     group_members = action.getMembers(chat_id,user)
                     context['group_members'] = group_members
-                    context['chatId'] = current_track[0].user.chatId
-                    context['userId'] = str(userId)
+                else:
+                    context['username'] = username
                 return render(request, 'flockapp/widget.html', context)
     else:
         raise Http404("wth you doing bro?")
