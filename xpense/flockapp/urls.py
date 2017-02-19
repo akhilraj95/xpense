@@ -12,4 +12,8 @@ urlpatterns = [
     url(r'^sendmessage$',views.sendmessage, name='sendmessage'),
     url(r'^generatereport$',views.generatereport, name='generatereport'),
     url(r'^deletetrack$',views.deletetrack, name='deletetrack'),
+    url(r'^chattab$',views.chattab, name='chattab'),
+    url(r'^chattablist$',views.chattablist, name='chattablist'),
+    url(r'^chattabreport$',views.chattabreport, name='chattabreport'),
+    url(r'^chattabclose$',views.chattabclose, name='chattabclose'),    
 ]

@@ -111,6 +111,9 @@ def widget(request):
             track_list = Chattrack.objects.filter(user=chat)
             context['track_list'] = track_list
             return render(request, 'flockapp/deletetrack.html', context)
+        elif(cmd_text=='help'):
+            context={}
+            return render(request, 'flockapp/help.html', context)
         else:
             current_chat = Chat.objects.filter(chatId = chat_id)
             if(len(current_chat)==0):
@@ -134,6 +137,90 @@ def widget(request):
                 return render(request, 'flockapp/widget.html', context)
     else:
         raise Http404("wth you doing bro?")
+
+
+def chattab(request):
+    if(jwt.verify(request.GET['flockEventToken'])):
+        currency_list = Currency.objects.all()
+        context = {
+            'currency_list' : currency_list,
+        }
+
+        #Getting group information
+        flockEvent = request.GET['flockEvent']
+        pjson = json.loads(flockEvent)
+        chat_id = str(pjson['chat'])
+        chat_name = pjson['chatName']
+        username = pjson['userName']
+        userId = pjson['userId']
+
+        current_chat = Chat.objects.filter(chatId = chat_id)
+        if(len(current_chat)==0):
+            Chat(name=str(chat_name),chatId=str(chat_id)).save()
+        current_track = Chattrack.objects.filter(user = current_chat,active=True)
+        if(len(current_track)==0):
+            context['id'] = chat_id
+            context['userId'] = str(userId)
+            return render(request, 'flockapp/starttrack2.html', context)
+        else:
+            user = User.objects.get(userId = userId)
+            context['chatId'] = current_track[0].user.chatId
+            context['userId'] = str(userId)
+            if(str(chat_id)[0]=='g'):
+                #group
+                group_members = action.getMembers(chat_id,user)
+                context['group_members'] = group_members
+            else:
+                context['username'] = username
+            return render(request, 'flockapp/widget2.html', context)
+    return HttpResponse("ok")
+
+def chattablist(request):
+    context = {}
+    userId = request.POST['userId']
+    chatId = request.POST['chatId']
+    current_chat = Chat.objects.filter(chatId = chatId)
+    current_track = Chattrack.objects.filter(user = current_chat,active=True)
+    message = 'The list of '+current_track[0].name+' expenses are,\n'
+    ch_list = ChatExpense.objects.filter(track=current_track)
+    for expense in ch_list:
+        message = message+str(expense.currency.abbr)+' '+str(expense.amount)+' by '+str(expense.paidbywhom)+' for '+str(expense.purpose)+'\n'
+    context['chatexpense_list'] = ch_list
+    context['current_track'] = current_track[0]
+    context['message'] = message
+    context['userId'] = str(userId)
+    context['chatId'] = str(chatId)
+    return render(request, 'flockapp/listexpense.html', context)
+
+def chattabclose(request):
+    context = {}
+    userId = request.POST['userId']
+    chatId = request.POST['chatId']
+    user = User.objects.get(userId = userId)
+    current_chat = Chat.objects.filter(chatId = chatId)
+    current_track = Chattrack.objects.filter(user = current_chat,active=True)
+    if(len(current_track)==0):
+        return HttpResponse("You aren't tracking yet. Try /Xpense to start tracking.")
+    else:
+        current_track[0].active = False
+        current_track[0].save()
+        action.sendGroupMessage(str(chatId),user,'Xpense tracking of '+current_track[0].name+' closed.')
+        context['userId'] = str(userId)
+        context['track'] = current_track[0]
+        context['chatId'] = str(chatId)
+        return render(request, 'flockapp/closetrack.html', context)
+
+def chattabreport(request):
+    context = {}
+    userId = request.POST['userId']
+    chatId = request.POST['chatId']
+    context['userId'] = str(userId)
+    context['chatId'] = str(chatId)
+    chat = Chat.objects.get(chatId = str(chatId))
+    track_list = Chattrack.objects.filter(user=chat)
+    context['track_list'] = track_list
+    return render(request, 'flockapp/report.html', context)
+
 
 def closewidget(request):
     context = {}

@@ -1,0 +1,132 @@
+<html>
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
+
+    <script src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
+    <script>
+    function myFunction() {
+
+      var http = new XMLHttpRequest();
+      var url = "addexpense";
+      var currency=encodeURIComponent(document.getElementById("currency").value);
+      var amount=encodeURIComponent(document.getElementById("amount").value);
+      var paidby=encodeURIComponent(document.getElementById("paidby").value);
+      var purpose=encodeURIComponent(document.getElementById("purpose").value);
+      var chatId=encodeURIComponent(document.getElementById("chatId").value);
+      var userId=encodeURIComponent(document.getElementById("userId").value);
+      var parameters="currency="+currency+"&paidby="+paidby+"&amount="+amount+"&purpose="+purpose+"&chatId="+chatId+"&userId="+userId;
+      http.open("POST", url, true);
+      //Send the proper header information along with the request
+      http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      http.setRequestHeader("Content-length", parameters.length);
+      http.setRequestHeader("Connection", "close");
+      http.onreadystatechange = function() {//Call a function when the state changes.
+      	if(http.readyState == 4 && http.status == 200) {
+      		flock.close();
+      	}
+      }
+      http.send(parameters);
+    }
+    </script>
+
+</head>
+<body>
+  <br/>
+  <form action="submitexpense" method="POST">
+    <input id="chatId" value="{{chatId}}" type="hidden"/>
+    <input id="userId" value="{{userId}}" type="hidden"/>
+    <div class="container">
+      <div class="row">
+        <div class="input-field col s12">
+          <select id='currency'>
+            <option value="" disabled selected>Choose the currency</option>
+            {% if currency_list %}
+                    {% for currency in currency_list %}
+                      <option value="{{currency.id}}">{{currency.name}}</option>
+                    {% endfor %}
+            {% endif %}
+          </select>
+          <label>Currency</label>
+        </div>
+      </div>
+      <div class="input-field col s12">
+            <label>Amount</label>
+            <input id="amount" name="amount" placeholder="enter amount" type="number" required>
+      </div>
+
+      {% if group_members %}
+          <div class="row">
+            <div class="input-field col s12">
+              <select id='paidby'>
+                <option value="" disabled selected>who paid?</option>
+                        {% for user in group_members %}
+                          <option value="{{user.firstName}} {{user.lastName}}">{{user.firstName}}&nbsp{{user.lastName}}</option>
+                        {% endfor %}
+              </select>
+              <label>Paid by</label>
+            </div>
+          </div>
+      {% else%}
+        <div class="row">
+          <div class="input-field col s12">
+            <select id='paidby'>
+                        <option value="{{username}}" selected>{{username}}</option>
+            </select>
+            <label>Paid by</label>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="input-field col s12">
+            <label>Purpose</label>
+            <input id="purpose" name="purpose" placeholder="enter purpose" type="text" required>
+      </div>
+
+      <div class="row">
+            <div class="center-align">
+                <input type="button" value="add" onclick="myFunction()"/>
+            </div>
+      </div>
+    </div>
+
+
+  </form>
+  <br/>
+  <br/>
+  <div class="container">
+  <div class="row">
+          <div class="col s12 center-align">
+              <form method="POST" action="chattabclose">
+                {%csrf_token%}
+                <input name="chatId" value="{{chatId}}" type="hidden"/>
+                <input name="userId" value="{{userId}}" type="hidden"/>
+                <input type="submit" class='btn' value="stop tracking"/>
+              </form>
+        </div>
+  </div>
+  <div class="row">
+        <div class="col s12 center-align">
+              <form method="POST" action="chattabreport">
+                {%csrf_token%}
+                <input name="chatId" value="{{chatId}}" type="hidden"/>
+                <input name="userId" value="{{userId}}" type="hidden"/>
+                <input type="submit" class='btn' value="Report"/>
+              </form>
+        </div>
+  </div>
+</div>
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js'></script>
+  <script>
+    $(document).ready(function() {
+      $('select').material_select();
+    });
+  </script>
+</body>
+</html>
