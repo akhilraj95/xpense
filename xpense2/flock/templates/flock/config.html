@@ -1,0 +1,81 @@
+<html>
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
+  <style>
+        header, main, footer {
+        padding-left: 300px;
+      }
+
+      @media only screen and (max-width : 992px) {
+        header, main, footer {
+          padding-left: 0;
+        }
+      }
+  </style>
+
+</head>
+
+  <!-- SIDEBAR -->
+  <ul id="slide-out" class="side-nav fixed">
+        <br />
+        <h2 class="center-align header">Xpense</h2>
+        <br />
+        <hr />
+        <li><a href="#!">Xpense Application</a></li>
+        <li><a href="#!">Flock application</a></li>
+        <li><a href="#!">About</a></li>
+  </ul>
+  <a href="#" data-activates="slide-out" class="button-collapse"><i class="material-icons">menu</i></a>
+
+  <!-- MAINCONTENT -->
+  <main>
+      <div class="container">
+        <div class="row">
+          <!-- MAINBODY -->
+          <div class="col s12 m11">
+            <h2 class="header">Xpense flock app </h2>
+            <p class="flow-text">Thank you for downloading <b>Xpense</b>. Xpense bot is available at your service on flock.</p>
+            <div>
+              <p class="flow-text">
+                Help us serve you better by giving us your basic information.
+              </p>
+              <div class="container">
+                <div class="row">
+                    <div class="col s12">
+                        <p class="flow-text">
+                          <b>Be smart use /slash commands</b>
+                        </p>
+                        <p class="flow-text">
+                          <b>/xpense</b> : to start tracking or add expense
+                        </p>
+                        <p class="flow-text">
+                          <b>/xpense list</b> : to list all currently tracked expenses
+                        </p>
+                        <p class="flow-text">
+                          <b>/xpense report</b> : to generate reports for saved tracks
+                        </p>
+                        <p class="flow-text">
+                          <b>/xpense close</b> : to complete this track
+                        </p>
+                        <p class="flow-text">
+                          <b>/xpense delete</b> : to delete saved tracks
+                        </p>
+                        <p class="flow-text">
+                          Long click on Bill images to track them.
+                        </p>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- RIGHTSIDEBAR -->
+          <div class="col s12 m1">
+          </div>
+        </div>
+      </div>
+  </main>
+</html>
