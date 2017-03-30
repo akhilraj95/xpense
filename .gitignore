@@ -2,3 +2,6 @@
 *.pyc
 xpense/flockapp/flockapplib/flockappsecret.py
 xpense/db.sqlite3
+xpense2/db.sqlite3
+xpense2/flock/secret.py
+xpense2/xpense2/settings.py

@@ -1,0 +1,76 @@
+<html>
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
+  <script src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
+
+
+  <script>
+  function myFunction() {
+
+    var http = new XMLHttpRequest();
+    var url = "start";
+    var chat_id=encodeURIComponent(document.getElementById("chat_id").value);
+    var userId=encodeURIComponent(document.getElementById("userId").value);
+    var chat_name=encodeURIComponent(document.getElementById("chat_name").value);
+    var username=encodeURIComponent(document.getElementById("username").value);
+    var trackname=encodeURIComponent(document.getElementById("trackname").value);
+    var purpose=encodeURIComponent(document.getElementById("purpose").value);
+    var csrfmiddlewaretoken = encodeURIComponent(document.getElementsByName("csrfmiddlewaretoken")[0].value);
+    var parameters="chat_id="+chat_id+"&trackname="+trackname+"&purpose="+purpose+"&userId="+userId+"&chat_name="+chat_name+"&username="+username+"&csrfmiddlewaretoken="+csrfmiddlewaretoken;
+    http.open("POST", url, true);
+    //Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    http.setRequestHeader("Content-length", parameters.length);
+    http.setRequestHeader("Connection", "close");
+
+    http.onreadystatechange = function() {//Call a function when the state changes.
+    	if(http.readyState == 4 && http.status == 200) {
+    		flock.close();
+    	}
+    }
+    http.send(parameters);
+  }
+  </script>
+
+
+
+</head>
+<body>
+  <br/>
+  <form action="starttrack" method="POST">
+    {% csrf_token %}
+    <div class="container">
+        <input name="chat_id" id="chat_id" value='{{chat_id}}' type="hidden"/>
+        <input name="userId" id="userId" value='{{userId}}' type="hidden"/>
+        <input name="chat_name" id="chat_name" value='{{chat_name}}' type="hidden"/>
+        <input name="username" id="username" value='{{username}}' type="hidden"/>
+        <div class="input-field col s12">
+              <label>Track name</label>
+              <input id="trackname" name="trackname" placeholder="name for your reference" type="text" required>
+        </div>
+        <div class="input-field col s12">
+              <label>Purpose</label>
+              <input id="purpose" name="purpose" placeholder="enter purpose of the track" type="text" required>
+        </div>
+        <div class="row">
+              <div class="center-align">
+                  <input type="button" value="start" onclick="myFunction()"/>
+              </div>
+        </div>
+    </div>
+  </form>
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js'></script>
+  <script>
+    $(document).ready(function() {
+      $('select').material_select();
+    });
+  </script>
+</body>
+</html>
