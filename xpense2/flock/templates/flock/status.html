@@ -1,0 +1,52 @@
+<html>
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
+  <script src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
+
+  <script>
+  function myFunction(track_id) {
+    document.getElementById("track").value = track_id;
+    document.getElementById("myForm").submit();
+  }
+  </script>
+
+</head>
+<body>
+  <br/>
+  <form id='myForm' action="track" method="POST">
+    {% csrf_token %}
+    <div class="container">
+      <input name="chat_id" id="chat_id" value='{{chat_id}}' type="hidden"/>
+      <input name="userId" id="userId" value='{{userId}}' type="hidden"/>
+      <input name="chat_name" id="chat_name" value='{{chat_name}}' type="hidden"/>
+      <input name="username" id="username" value='{{username}}' type="hidden"/>
+      <input name="track" id="track" name = 'track' value='' type="hidden"/>
+        <div class="row">
+          {% if track_list %}
+            <p class="flow-text"><b>Your Tracks</b></p>
+               <div class="input-field col s12">
+                 <div class="collection">
+                   {% for track in track_list %}
+                    <a onclick='myFunction({{track.id}});' class="collection-item">{{track.name}}&nbsp-&nbsp{{track.purpose}}</a>
+                   {% endfor %}
+                 </div>
+               </div>
+          {% endif %}
+        </div>
+    </div>
+  </form>
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js'></script>
+  <script>
+    $(document).ready(function() {
+      $('select').material_select();
+    });
+  </script>
+</body>
+</html>

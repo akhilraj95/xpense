@@ -1,0 +1,58 @@
+<html>
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
+  <script src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
+
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+        <div class="col s12">
+          <H4 class="flow-text">{{track.name}}</h4>
+          <blockquote>
+            <b>Purpose</b>&nbsp:&nbsp{{track.purpose}}</br>
+            {% if budget %}
+              <b>Budget</b>&nbsp:&nbsp{{track.budget_currency.abbr}}&nbsp{{track.budget}}</br>
+            {% endif %}
+            {% if total_expense%}
+              <b>Total</b>
+              <ul>
+              {% for key, values in total_expense.items %}
+                  <li>{{key}}&nbsp{{values}}</li>
+              {% endfor %}
+              </ul>
+            {% endif %}
+          </blockquote>
+          {% if expense_list %}
+          <H4 class="flow-text">Expenses</h4>
+          <ul class="collapsible" data-collapsible="accordion">
+            {% for expense in expense_list %}
+            <li>
+              <div class="collapsible-header">{{expense.currency.abbr}}&nbsp{{expense.amount}}&nbspfor&nbsp{{expense.purpose}}</div>
+              <div class="collapsible-body">
+                <span>
+                  <b>Paid by</b>&nbsp:&nbsp{{expense.paidby}}</br>
+                  <b>Time </b>&nbsp:&nbsp{{expense.timestamp}}</br>
+                </span>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+    </div>
+  </div>
+</body>
+<!--  Scripts-->
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js'></script>
+<script>
+  $(document).ready(function() {
+    $('select').material_select();
+  });
+</script>
+</html>

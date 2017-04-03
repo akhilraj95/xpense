@@ -1,5 +1,5 @@
 import secret
-from models import User
+from models import User,Currency
 #FlockOS
 from pyflock import FlockClient, verify_event_token
 from pyflock import Message, SendAs, Attachment, Views, WidgetView, HtmlView, ImageView, Image, Download, Button, OpenWidgetAction, OpenBrowserAction, SendToAppAction
@@ -28,5 +28,19 @@ def sendMessage(chat_id,userId,message):
         send_as_xpense = SendAs(name='Xpense', profile_image='https://pbs.twimg.com/profile_images/1788506913/HAL-MC2_400x400.png')
         send_as_message = Message(to=chat_id,text=message,send_as=send_as_xpense)
         flock_client.send_chat(send_as_message)
+    except:
+        raise
+
+def total(expense_list):
+    try:
+        currency_list = Currency.objects.all()
+        total = {}
+        for curr in currency_list:
+            total[curr.abbr] = 0
+        for expense in expense_list:
+            total[expense.currency.abbr]+=expense.amount
+        total = {key: value for key, value in total.items()
+             if value is not 0}
+        return total
     except:
         raise

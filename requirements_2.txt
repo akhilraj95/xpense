@@ -1,2 +1,3 @@
 django
 git+git://github.com/flockchat/pyflock
+django-csp

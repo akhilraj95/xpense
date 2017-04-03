@@ -2,15 +2,17 @@ from django.shortcuts import render
 from django.http import HttpResponse,Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_exempt
+from csp.decorators import csp_update
 import secret,action
 import json
+
 
 
 #FlockOS
 from pyflock import FlockClient, verify_event_token
 from pyflock import Message, SendAs, Attachment, Views, WidgetView, HtmlView, ImageView, Image, Download, Button, OpenWidgetAction, OpenBrowserAction, SendToAppAction
 
-from models import User
+from models import User,Chat,Track,Currency,Expense
 
 # Event Listsener URL
 @csrf_exempt
@@ -34,8 +36,10 @@ def config(request):
     }
     return render(request, 'flock/config.html', context)
 
+@csp_update(FRAME_SRC='self')
 @xframe_options_exempt
 def slash(request):
+    '''listens to xpense slash commands and renders the modal'''
     context = {}
     event_token = request.GET['flockEventToken']
     app_secret = secret.getAppSecret()
@@ -44,6 +48,7 @@ def slash(request):
     #Getting group information
     flockEvent = request.GET['flockEvent']
     pjson = json.loads(flockEvent)
+    print pjson
     chat_id = str(pjson['chat'])
     chat_name = pjson['chatName']
     username = pjson['userName']
@@ -56,6 +61,10 @@ def slash(request):
     context['chat_name'] = chat_name
     context['username'] = username
 
+    #get all the currency
+    currency_list = Currency.objects.all()
+    context['currency_list'] = currency_list
+
     if cmd_text == '' or cmd_text =='help':
         return render(request, 'flock/slash_help.html', context)
     elif cmd_text == 'start':
@@ -63,17 +72,158 @@ def slash(request):
     elif cmd_text == 'close':
         return render(request, 'flock/slash_help.html', context)
     elif cmd_text == 'add':
-        return render(request, 'flock/slash_help.html', context)
-    elif cmd_text == 'delete':
-        return render(request, 'flock/slash_help.html', context)
-    elif cmd_text == 'list':
-        return render(request, 'flock/slash_help.html', context)
+        #get all tracks of the chat
+        chatObjList = Chat.objects.filter(chat_id=chat_id)
+        if len(chatObjList)==0:
+            return render(request, 'flock/start.html', context)
+        else:
+            trackObjList = Track.objects.filter(chat = chatObjList[0])
+            context['track_list'] = trackObjList
+        #get all the members of the chat
+        if chat_id[0] == 'g':
+            user = User.objects.get(userId=userId)
+            flock_client = FlockClient(token=user.token, app_id=secret.getAppID)
+            member_list = flock_client.get_group_members(chat_id)
+            context['member_list'] = member_list
+            print member_list
+        else:
+            member_list = []
+            member = {
+                'firstName' : username,
+                'lastName' : '',
+                'id': userId,}
+            member_list.append(member)
+            member = {
+                'firstName' : chat_name,
+                'lastName' : '',
+                'id': chat_id,}
+            member_list.append(member)
+            context['member_list'] = member_list
+            print member_list
+        return render(request, 'flock/add.html', context)
     elif cmd_text == 'status':
+        chatObjList = Chat.objects.filter(chat_id=chat_id)
+        if len(chatObjList)==0:
+            return render(request, 'flock/start.html', context)
+        else:
+            trackObjList = Track.objects.filter(chat = chatObjList[0])
+            context['track_list'] = trackObjList
+        return render(request, 'flock/status.html', context)
+    elif cmd_text == 'delete':
+        chatObjList = Chat.objects.filter(chat_id=chat_id)
+        if len(chatObjList)==0:
+            return render(request, 'flock/start.html', context)
+        else:
+            trackObjList = Track.objects.filter(chat = chatObjList[0])
+            context['track_list'] = trackObjList
+        return render(request, 'flock/delete.html', context)
+    elif cmd_text == 'close':
         return render(request, 'flock/slash_help.html', context)
     elif cmd_text == 'print':
         return render(request, 'flock/slash_help.html', context)
 
 
 def start(request):
-    print request.POST['chat_id']
+    '''Registers the chat if not registered before and starts a track'''
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    trackname = request.POST['trackname']
+    purpose = request.POST['purpose']
+    currency = request.POST['currency']
+    budget = request.POST['budget']
+    #Check if trackname is empty
+    if trackname == '':
+        action.sendMessage(chat_id,userId,"Xpense couldn't start track. Try again with another name")
+
+    chatObjList = Chat.objects.filter(chat_id=chat_id)
+    chatObj = 0
+    #Register the chat if not already registered.
+    if len(chatObjList)==0:
+        #Register the chat
+        chatObj = Chat(chat_id = chat_id,chat_name = chat_name)
+        chatObj.save()
+    else:
+        chatObj = chatObjList[0]
+    #creating track
+    if currency != '':
+        currencyObj = Currency.objects.get(id=currency)
+        Track(name=trackname,chat =chatObj,purpose=purpose,budget=budget,budget_currency=currencyObj).save()
+    else:
+        Track(name=trackname,chat =chatObj,purpose=purpose,budget=budget).save()
+    action.sendMessage(chat_id,userId,"Started a new track "+trackname)
     return HttpResponse("OK")
+
+
+def add(request):
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    amount = request.POST['amount']
+    paidby = request.POST['paidby']
+    currency = request.POST['currency']
+    track = request.POST['track']
+    purpose = request.POST['purpose']
+    # print chat_id
+    # print userId
+    # print chat_name
+    # print username
+    # print amount
+    # print paidby
+    # print currency
+    # print track
+    # print purpose
+    chatObj = Chat.objects.get(chat_id=chat_id)
+    trackObj = Track.objects.get(id=track)
+    currencyObj = Currency.objects.get(id= currency)
+    #verify that the track belongs to that chat
+    if trackObj.chat == chatObj:
+        Expense(track=trackObj,amount=amount,currency = currencyObj,paidby = paidby,purpose=purpose).save()
+
+    return HttpResponse("OK")
+
+@xframe_options_exempt
+def track(request):
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    track_id = request.POST['track']
+    print chat_id
+    print userId
+    print chat_name
+    print username
+
+    trackObj = Track.objects.get(id = track_id)
+    #check if chat_id is same
+    if(chat_id!=trackObj.chat.chat_id):
+        return HttpResponse('ok')
+    context = {
+        'track': trackObj
+    }
+    if trackObj.budget != 0:
+        context['budget'] = trackObj.budget
+
+    expense_list = Expense.objects.filter(track = trackObj)
+    total_expense = action.total(expense_list)
+    context['expense_list'] = expense_list
+    context['total_expense'] = total_expense
+    return render(request, 'flock/track.html', context)
+
+def delete(request):
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    track_id = request.POST['track_id']
+
+    trackObj = Track.objects.get(id = track_id)
+    name = trackObj.name
+    #check if chat_id is same
+    if(chat_id!=trackObj.chat.chat_id):
+        return HttpResponse('ok')
+    trackObj.delete()
+    action.sendMessage(chat_id,userId,"Deleted track - "+name)
+    return HttpResponse('ok')

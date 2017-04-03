@@ -12,17 +12,20 @@
   function myFunction() {
 
     var http = new XMLHttpRequest();
-    var url = "start";
+    var url = "add";
     var chat_id=encodeURIComponent(document.getElementById("chat_id").value);
     var userId=encodeURIComponent(document.getElementById("userId").value);
     var chat_name=encodeURIComponent(document.getElementById("chat_name").value);
     var username=encodeURIComponent(document.getElementById("username").value);
-    var trackname=encodeURIComponent(document.getElementById("trackname").value);
-    var purpose=encodeURIComponent(document.getElementById("purpose").value);
-    var budget=encodeURIComponent(document.getElementById("budget").value);
+
+    var amount=encodeURIComponent(document.getElementById("amount").value);
     var currency=encodeURIComponent(document.getElementById("currency").value);
+    var paidby=encodeURIComponent(document.getElementById("paidby").value);
+    var track=encodeURIComponent(document.getElementById("track").value);
+    var purpose=encodeURIComponent(document.getElementById("purpose").value);
+
     var csrfmiddlewaretoken = encodeURIComponent(document.getElementsByName("csrfmiddlewaretoken")[0].value);
-    var parameters="chat_id="+chat_id+"&currency="+currency+"&budget="+budget+"&trackname="+trackname+"&purpose="+purpose+"&userId="+userId+"&chat_name="+chat_name+"&username="+username+"&csrfmiddlewaretoken="+csrfmiddlewaretoken;
+    var parameters="chat_id="+chat_id+"&paidby="+paidby+"&currency="+currency+"&amount="+amount+"&track="+track+"&purpose="+purpose+"&userId="+userId+"&chat_name="+chat_name+"&username="+username+"&csrfmiddlewaretoken="+csrfmiddlewaretoken;
     http.open("POST", url, true);
     //Send the proper header information along with the request
     http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -48,38 +51,60 @@
     <div class="container">
         <div class="row">
           <div class="col s12 m6">
-              <p class="flow-text"><b>Start a new track</b></p>
+              <p class="flow-text"><b>Add a new expense</b></p>
               <input name="chat_id" id="chat_id" value='{{chat_id}}' type="hidden"/>
               <input name="userId" id="userId" value='{{userId}}' type="hidden"/>
               <input name="chat_name" id="chat_name" value='{{chat_name}}' type="hidden"/>
               <input name="username" id="username" value='{{username}}' type="hidden"/>
               <div class="input-field col s12">
-                    <label>Track name</label>
-                    <input id="trackname" name="trackname" placeholder="Ex. food, travel, project-x" type="text" required>
+                  <label>Amount</label>
+                  <input id="amount" name="amount" placeholder="enter amount" type="number" required>
               </div>
-              <div class="input-field col s12">
-                    <label>Purpose</label>
-                    <input id="purpose" name="purpose" placeholder="Ex. Customer visit-travel (Empty if not required) " type="text" required>
-              </div>
-              <p>
-                <b>Add a budget to your track.(Ignore if you dont want to)</b>
-              </p>
               <div class="row">
-                    <div class="input-field col s3">
+                    <div class="input-field col s12">
                       <select id='currency'>
-                        <option value="" disabled selected>currency</option>
+                        <option value="" disabled selected>Choose the currency</option>
                         {% if currency_list %}
                                 {% for currency in currency_list %}
-                                  <option value="{{currency.id}}">{{currency.abbr}}</option>
+                                  <option value="{{currency.id}}">{{currency.name}}</option>
                                 {% endfor %}
                         {% endif %}
                       </select>
                       <label>Currency</label>
                     </div>
-                    <div class="input-field col s9">
-                          <label>Budget</label>
-                          <input id="budget" name="budget" placeholder="enter amount" type="number" value="0" required>
+              </div>
+
+              {% if member_list %}
+               <div class="row">
+                    <div class="input-field col s12">
+                      <select id='paidby'>
+                        <option value="" disabled selected>who paid?</option>
+                                {% for user in member_list %}
+                                  <option value="{{user.firstName}} {{user.lastName}}">{{user.firstName}}&nbsp{{user.lastName}}</option>
+                                {% endfor %}
+                      </select>
+                      <label>Paid by</label>
                     </div>
+                </div>
+                {% endif %}
+
+              {% if track_list %}
+              <div class="row">
+                   <div class="input-field col s12">
+                     <select id='track'>
+                       <option value="" disabled selected>which track?</option>
+                           {% for track in track_list %}
+                             <option value="{{track.id}}">{{track.name}}</option>
+                           {% endfor %}
+                     </select>
+                     <label>Track</label>
+                   </div>
+               </div>
+              {% endif %}
+
+              <div class="input-field col s12">
+                    <label>Purpose</label>
+                    <input id="purpose" name="purpose" placeholder="Ex. Taxi from X to Y(Empty if not required) " type="text" required>
               </div>
               <div class="row">
                     <div class="center-align">
