@@ -7,6 +7,9 @@
 
   <script src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
 
+  
+
+
 </head>
 <body>
   <div class="container">
@@ -17,14 +20,16 @@
             <b>Purpose</b>&nbsp:&nbsp{{track.purpose}}</br>
             {% if budget %}
               <b>Budget</b>&nbsp:&nbsp{{track.budget_currency.abbr}}&nbsp{{track.budget}}</br>
+              <b>Percent spent</b>&nbsp:&nbsp{{perc_spent}}%</br>
+            {% endif %}
+            {% if converted_total %}
+              <b>Total</b>&nbsp:&nbsp{{track.budget_currency.abbr}}&nbsp{{converted_total}}</br>
             {% endif %}
             {% if total_expense%}
-              <b>Total</b>
-              <ul>
+              <b>Total expense breakdown</b></br>
               {% for key, values in total_expense.items %}
-                  <li>{{key}}&nbsp{{values}}</li>
+                  <h6>{{key}}&nbsp{{values}}</h6>
               {% endfor %}
-              </ul>
             {% endif %}
           </blockquote>
           {% if expense_list %}

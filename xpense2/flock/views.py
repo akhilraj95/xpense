@@ -36,11 +36,8 @@ def config(request):
     }
     return render(request, 'flock/config.html', context)
 
-@csp_update(FRAME_SRC='self')
-@xframe_options_exempt
 def slash(request):
     '''listens to xpense slash commands and renders the modal'''
-    context = {}
     event_token = request.GET['flockEventToken']
     app_secret = secret.getAppSecret()
     verify_event_token(event_token = event_token, app_secret = app_secret)
@@ -55,23 +52,56 @@ def slash(request):
     userId = pjson['userId']
     cmd_text = pjson['text']
 
+    # #Getting user token
+    # context['userId'] = userId
+    # context['chat_id'] = chat_id
+    # context['chat_name'] = chat_name
+    # context['username'] = username
+    #
+    # #get all the currency
+    # currency_list = Currency.objects.all()
+    # context['currency_list'] = currency_list
+
+    if cmd_text == '' or cmd_text =='help':
+        return main_interface(request,userId,chat_id,chat_name,username,0)
+    elif cmd_text == 'start':
+        return main_interface(request,userId,chat_id,chat_name,username,1)
+    elif cmd_text == 'add':
+        return main_interface(request,userId,chat_id,chat_name,username,2)
+    elif cmd_text == 'status':
+        return main_interface(request,userId,chat_id,chat_name,username,3)
+    elif cmd_text == 'delete':
+        return main_interface(request,userId,chat_id,chat_name,username,4)
+    else:
+        return render(request, 'flock/slash_help.html', context)
+
+@csp_update(FRAME_SRC='self')
+@xframe_options_exempt
+def main_interface(request,userId,chat_id,chat_name,username,option):
+    # option 0 - help
+    # option 1 - start
+    # option 2 - add
+    # option 3 - status
+    # option 4 - delete
+    context = {}
+
     #Getting user token
     context['userId'] = userId
     context['chat_id'] = chat_id
     context['chat_name'] = chat_name
     context['username'] = username
 
+    print "option = ",option
+
     #get all the currency
     currency_list = Currency.objects.all()
     context['currency_list'] = currency_list
 
-    if cmd_text == '' or cmd_text =='help':
+    if option == 0:
         return render(request, 'flock/slash_help.html', context)
-    elif cmd_text == 'start':
+    elif option == 1:
         return render(request, 'flock/start.html', context)
-    elif cmd_text == 'close':
-        return render(request, 'flock/slash_help.html', context)
-    elif cmd_text == 'add':
+    elif option == 2:
         #get all tracks of the chat
         chatObjList = Chat.objects.filter(chat_id=chat_id)
         if len(chatObjList)==0:
@@ -101,7 +131,7 @@ def slash(request):
             context['member_list'] = member_list
             print member_list
         return render(request, 'flock/add.html', context)
-    elif cmd_text == 'status':
+    elif option == 3:
         chatObjList = Chat.objects.filter(chat_id=chat_id)
         if len(chatObjList)==0:
             return render(request, 'flock/start.html', context)
@@ -109,7 +139,7 @@ def slash(request):
             trackObjList = Track.objects.filter(chat = chatObjList[0])
             context['track_list'] = trackObjList
         return render(request, 'flock/status.html', context)
-    elif cmd_text == 'delete':
+    elif option == 4:
         chatObjList = Chat.objects.filter(chat_id=chat_id)
         if len(chatObjList)==0:
             return render(request, 'flock/start.html', context)
@@ -117,9 +147,7 @@ def slash(request):
             trackObjList = Track.objects.filter(chat = chatObjList[0])
             context['track_list'] = trackObjList
         return render(request, 'flock/delete.html', context)
-    elif cmd_text == 'close':
-        return render(request, 'flock/slash_help.html', context)
-    elif cmd_text == 'print':
+    else:
         return render(request, 'flock/slash_help.html', context)
 
 
@@ -166,15 +194,7 @@ def add(request):
     currency = request.POST['currency']
     track = request.POST['track']
     purpose = request.POST['purpose']
-    # print chat_id
-    # print userId
-    # print chat_name
-    # print username
-    # print amount
-    # print paidby
-    # print currency
-    # print track
-    # print purpose
+
     chatObj = Chat.objects.get(chat_id=chat_id)
     trackObj = Track.objects.get(id=track)
     currencyObj = Currency.objects.get(id= currency)
@@ -207,9 +227,11 @@ def track(request):
         context['budget'] = trackObj.budget
 
     expense_list = Expense.objects.filter(track = trackObj)
-    total_expense = action.total(expense_list)
+    total_expense_by_curr,converted_total,perc_spent = action.total(expense_list,trackObj)
     context['expense_list'] = expense_list
-    context['total_expense'] = total_expense
+    context['total_expense'] = total_expense_by_curr
+    context['converted_total'] = converted_total
+    context['perc_spent'] = perc_spent
     return render(request, 'flock/track.html', context)
 
 def delete(request):
@@ -227,3 +249,36 @@ def delete(request):
     trackObj.delete()
     action.sendMessage(chat_id,userId,"Deleted track - "+name)
     return HttpResponse('ok')
+
+######################################################################### - chattab
+
+
+@xframe_options_exempt
+def chattab(request):
+    context = {}
+    event_token = request.GET['flockEventToken']
+    app_secret = secret.getAppSecret()
+    verify_event_token(event_token = event_token, app_secret = app_secret)
+
+    #Getting group information
+    flockEvent = request.GET['flockEvent']
+    pjson = json.loads(flockEvent)
+    print pjson
+    chat_id = str(pjson['chat'])
+    chat_name = pjson['chatName']
+    username = pjson['userName']
+    userId = pjson['userId']
+
+    context['userId'] = userId
+    context['chat_id'] = chat_id
+    context['chat_name'] = chat_name
+    context['username'] = username
+    return render(request, 'flock/options.html', context)
+
+def chattabaction(request):
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    action_id = int(request.POST['action'])
+    return main_interface(request,userId,chat_id,chat_name,username,action_id)

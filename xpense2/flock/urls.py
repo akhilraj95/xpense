@@ -7,6 +7,10 @@ urlpatterns = [
     url(r'^events$', views.events, name='events'),
     #flock configuration url
     url(r'^config$', views.config, name='config'),
+    #flock chattab
+    url(r'^chattab$', views.chattab, name='chattab'),
+    #flock chattabaction
+    url(r'^chattabaction$', views.chattabaction, name='chattabaction'),
     #flock slash
     url(r'^slash$', views.slash, name='slash'),
     #flock start track
