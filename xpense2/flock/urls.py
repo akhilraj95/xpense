@@ -21,4 +21,10 @@ urlpatterns = [
     url(r'^track$', views.track, name='track'),
     #flock deleting track
     url(r'^delete$', views.delete, name='delete'),
+    #flock adding bill through Message action bank
+    url(r'^mab$', views.mab, name='mab'),
+    #flock handling bill addition
+    url(r'^bill$', views.bill, name='bill'),
+    #flock handling report request
+    url(r'^report$', views.report, name='report'),
 ]

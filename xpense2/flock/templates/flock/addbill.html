@@ -1,0 +1,138 @@
+<html>
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
+  <script src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
+
+
+  <script>
+  function myFunction() {
+
+    var http = new XMLHttpRequest();
+    var url = "add";
+    var chat_id=encodeURIComponent(document.getElementById("chat_id").value);
+    var userId=encodeURIComponent(document.getElementById("userId").value);
+    var chat_name=encodeURIComponent(document.getElementById("chat_name").value);
+    var username=encodeURIComponent(document.getElementById("username").value);
+
+    var amount=encodeURIComponent(document.getElementById("amount").value);
+    var currency=encodeURIComponent(document.getElementById("currency").value);
+    var paidby=encodeURIComponent(document.getElementById("paidby").value);
+    var track=encodeURIComponent(document.getElementById("track").value);
+    var purpose=encodeURIComponent(document.getElementById("purpose").value);
+    var url_list=encodeURIComponent(document.getElementById("url_list").value);
+
+
+    var csrfmiddlewaretoken = encodeURIComponent(document.getElementsByName("csrfmiddlewaretoken")[0].value);
+    var parameters="chat_id="+chat_id+"&paidby="+paidby+"&currency="+currency+"&amount="+amount+"&track="+track+"&purpose="+purpose+"&userId="+userId+"&chat_name="+chat_name+"&username="+username+"&csrfmiddlewaretoken="+csrfmiddlewaretoken+"&url_list="+url_list;
+    http.open("POST", url, true);
+    //Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    http.setRequestHeader("Content-length", parameters.length);
+    http.setRequestHeader("Connection", "close");
+
+    http.onreadystatechange = function() {//Call a function when the state changes.
+    	if(http.readyState == 4 && http.status == 200) {
+    		flock.close();
+    	}
+    }
+    http.send(parameters);
+  }
+  </script>
+
+
+
+</head>
+<body>
+  <br/>
+  <form action="starttrack" method="POST">
+    {% csrf_token %}
+    <div class="container">
+        <div class="row">
+          <div class="col s12 m6">
+              <p class="flow-text"><b>Enter Bill details</b></p>
+              <input name="chat_id" id="chat_id" value='{{chat_id}}' type="hidden"/>
+              <input name="userId" id="userId" value='{{userId}}' type="hidden"/>
+              <input name="chat_name" id="chat_name" value='{{chat_name}}' type="hidden"/>
+              <input name="username" id="username" value='{{username}}' type="hidden"/>
+              <input name="url_list" id="url_list" value='{{url_list}}' type="hidden"/>
+
+              <div class="input-field col s12">
+                  <label>Amount</label>
+                  <input id="amount" name="amount" placeholder="enter amount" type="number" required>
+              </div>
+              <div class="row">
+                    <div class="input-field col s12">
+                      <select id='currency'>
+                        <option value="" disabled selected>Choose the currency</option>
+                        {% if currency_list %}
+                                {% for currency in currency_list %}
+                                  <option value="{{currency.id}}">{{currency.name}}</option>
+                                {% endfor %}
+                        {% endif %}
+                      </select>
+                      <label>Currency</label>
+                    </div>
+              </div>
+
+              {% if member_list %}
+               <div class="row">
+                    <div class="input-field col s12">
+                      <select id='paidby'>
+                        <option value="" disabled selected>who paid?</option>
+                                {% for user in member_list %}
+                                  <option value="{{user.firstName}} {{user.lastName}}">{{user.firstName}}&nbsp{{user.lastName}}</option>
+                                {% endfor %}
+                      </select>
+                      <label>Paid by</label>
+                    </div>
+                </div>
+                {% endif %}
+
+              {% if track_list %}
+              <div class="row">
+                   <div class="input-field col s12">
+                     <select id='track'>
+                       <option value="" disabled selected>which track?</option>
+                           {% for track in track_list %}
+                             <option value="{{track.id}}">{{track.name}}</option>
+                           {% endfor %}
+                     </select>
+                     <label>Track</label>
+                   </div>
+               </div>
+              {% endif %}
+
+              <div class="input-field col s12">
+                    <label>Purpose</label>
+                    <input id="purpose" name="purpose" placeholder="Ex. Taxi from X to Y(Empty if not required) " type="text" required>
+              </div>
+              <div class="row">
+                    <div class="center-align">
+                        <input type="button" value="start" onclick="myFunction(); this.disabled=true; this.value='Sending';"/>
+                    </div>
+              </div>
+          </div>
+          <div class="col s12 m6">
+            <p class="flow-text"><b>What is a track?</b></p>
+            <p class="flow-text">
+              A track is a set of expenses that xpenses will save under a common title. A track could be food expenses, travel expenses or anything you want to track independently.
+            </p>
+          </div>
+        </div>
+    </div>
+  </form>
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js'></script>
+  <script>
+    $(document).ready(function() {
+      $('select').material_select();
+    });
+  </script>
+</body>
+</html>

@@ -43,3 +43,9 @@ class Expense(models.Model):
     purpose = models.CharField(max_length=100, default = 'Unspecified')
     def __str__(self):
         return self.track.name+' '+self.purpose+' '+str(self.amount)
+
+class Bill(models.Model):
+    expense = models.ForeignKey('Expense', default = None , blank = True)
+    url = models.CharField(max_length=100, default = '')
+    def __str__(self):
+        return self.url

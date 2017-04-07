@@ -12,7 +12,7 @@ import json
 from pyflock import FlockClient, verify_event_token
 from pyflock import Message, SendAs, Attachment, Views, WidgetView, HtmlView, ImageView, Image, Download, Button, OpenWidgetAction, OpenBrowserAction, SendToAppAction
 
-from models import User,Chat,Track,Currency,Expense
+from models import User,Chat,Track,Currency,Expense,Bill
 
 # Event Listsener URL
 @csrf_exempt
@@ -72,7 +72,10 @@ def slash(request):
         return main_interface(request,userId,chat_id,chat_name,username,3)
     elif cmd_text == 'delete':
         return main_interface(request,userId,chat_id,chat_name,username,4)
+    elif cmd_text == 'report':
+        return main_interface(request,userId,chat_id,chat_name,username,5)
     else:
+        context ={}
         return render(request, 'flock/slash_help.html', context)
 
 @csp_update(FRAME_SRC='self')
@@ -83,6 +86,7 @@ def main_interface(request,userId,chat_id,chat_name,username,option):
     # option 2 - add
     # option 3 - status
     # option 4 - delete
+    # option 5 - report
     context = {}
 
     #Getting user token
@@ -147,6 +151,14 @@ def main_interface(request,userId,chat_id,chat_name,username,option):
             trackObjList = Track.objects.filter(chat = chatObjList[0])
             context['track_list'] = trackObjList
         return render(request, 'flock/delete.html', context)
+    elif option == 5:
+        chatObjList = Chat.objects.filter(chat_id=chat_id)
+        if len(chatObjList)==0:
+            return render(request, 'flock/start.html', context)
+        else:
+            trackObjList = Track.objects.filter(chat = chatObjList[0])
+            context['track_list'] = trackObjList
+        return render(request, 'flock/report_track.html', context)
     else:
         return render(request, 'flock/slash_help.html', context)
 
@@ -194,14 +206,19 @@ def add(request):
     currency = request.POST['currency']
     track = request.POST['track']
     purpose = request.POST['purpose']
+    url_list = []
+    if 'url_list' in request.POST:
+        url_list = json.loads(request.POST['url_list'])
 
     chatObj = Chat.objects.get(chat_id=chat_id)
     trackObj = Track.objects.get(id=track)
     currencyObj = Currency.objects.get(id= currency)
     #verify that the track belongs to that chat
     if trackObj.chat == chatObj:
-        Expense(track=trackObj,amount=amount,currency = currencyObj,paidby = paidby,purpose=purpose).save()
-
+        expenseObj = Expense(track=trackObj,amount=amount,currency = currencyObj,paidby = paidby,purpose=purpose)
+        expenseObj.save()
+        for url in url_list:
+            Bill(expense = expenseObj, url = str(url)).save()
     return HttpResponse("OK")
 
 @xframe_options_exempt
@@ -282,3 +299,94 @@ def chattabaction(request):
     username = request.POST['username']
     action_id = int(request.POST['action'])
     return main_interface(request,userId,chat_id,chat_name,username,action_id)
+
+
+########################################################################### - Message action Button
+@csp_update(FRAME_SRC='self')
+@xframe_options_exempt
+def mab(request):
+    context = {}
+    event_token = request.GET['flockEventToken']
+    app_secret = secret.getAppSecret()
+    verify_event_token(event_token = event_token, app_secret = app_secret)
+    flockEvent = request.GET['flockEvent']
+    pjson = json.loads(flockEvent)
+    print pjson
+    messageUids = pjson['messageUids']
+    chat_id = str(pjson['chat'])
+    chat_name = pjson['chatName']
+    username = pjson['userName']
+    userId = pjson['userId']
+
+    context['userId'] = userId
+    context['chat_id'] = chat_id
+    context['chat_name'] = chat_name
+    context['username'] = username
+
+    #get the url of the bills
+    user = User.objects.get(userId=userId)
+    token = user.token
+    messageUids = [str(m) for m in messageUids]
+    url_list = action.fetchMessagePictures(chat_id,token,messageUids)
+    print url_list
+    if len(url_list)==0:
+        return HttpResponse('Bills must be JPEG or PNG')
+
+    context['url_list'] = json.dumps(url_list)
+    #get set of tracks
+    chatObjList = Chat.objects.filter(chat_id=chat_id)
+    if len(chatObjList)==0:
+        return render(request, 'flock/start.html', context)
+    else:
+        trackObjList = Track.objects.filter(chat = chatObjList[0])
+        context['track_list'] = trackObjList
+
+    #get all members of the chat
+    if chat_id[0] == 'g':
+        user = User.objects.get(userId=userId)
+        flock_client = FlockClient(token=user.token, app_id=secret.getAppID)
+        member_list = flock_client.get_group_members(chat_id)
+        context['member_list'] = member_list
+        print member_list
+    else:
+        member_list = []
+        member = {
+            'firstName' : username,
+            'lastName' : '',
+            'id': userId,}
+        member_list.append(member)
+        member = {
+            'firstName' : chat_name,
+            'lastName' : '',
+            'id': chat_id,}
+        member_list.append(member)
+        context['member_list'] = member_list
+
+    #get all the currency
+    currency_list = Currency.objects.all()
+    context['currency_list'] = currency_list
+
+
+    return render(request, 'flock/addbill.html', context)
+
+
+def bill(request):
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    track_id = request.POST['track']
+    url_list = request.POST['url_list']
+    print track_id
+    print url_list
+    return HttpResponse('ok')
+
+def report(request):
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    track_id = request.POST['track']
+    trackObj = Track.objects.get(id = track_id)
+    action.report(trackObj)
+    return HttpResponse('ok')

@@ -1,6 +1,11 @@
 import secret
-from models import User,Currency
+from models import User,Currency,Expense,Bill
 import urllib2,json
+import urllib2
+import urllib
+from docx import Document
+import time
+
 
 #FlockOS
 from pyflock import FlockClient, verify_event_token
@@ -75,3 +80,68 @@ def getconversionrates(to_curr,from_curr_list):
     response = urllib2.urlopen(API_string).read()
     pjson = json.loads(response)
     return pjson['rates']
+
+def fetchMessagePictures(group_id,token,uids):
+    data = [('chat',str(group_id)),('token',str(token)),('uids',uids)]
+    url = 'https://api.flock.co/v1/chat.fetchMessages'
+    req = urllib2.Request(url, headers={'Content-Type' : 'application/x-www-form-urlencoded'})
+    result = urllib2.urlopen(req, urllib.urlencode(data))
+    content = result.read()
+    content = json.loads(content)
+    src_list = []
+    for data in content:
+        for attachment in data['attachments']:
+            for fil in attachment['downloads']:
+                if str(fil['mime']) in ['image/jpeg','image/png']:
+                    src_list.append(fil['src'])
+    return src_list
+
+
+def report(track):
+    document = Document()
+    document.add_heading('Expense Report - '+ str(track.name))
+
+    status = '\nPurpose : '+str(track.purpose)+'\n'
+
+    now = time.strftime("%c")
+
+    status = status + 'Report date: '+str(now)+'\n'
+    expense_list = Expense.objects.filter(track = track)
+    total_expense_by_curr,converted_total,perc_spent = total(expense_list,track)
+
+    if track.budget != 0:
+        status = status + 'Budget: '+str(track.budget_currency.abbr)+' '+str(track.budget)+'\n'
+        status = status + 'Total spent: '+str(track.budget_currency.abbr)+' '+ str(converted_total)+'\n'
+        status = status + 'Spending: '+str(perc_spent)+'%'+'\n'
+
+    status = status + 'Spending per currency:\n'
+    for key,value in total_expense_by_curr.items():
+        status = status+' - '+str(key)+' '+str(value)+'\n'
+
+    paragraph = document.add_paragraph(status)
+
+    #table
+    table = document.add_table(rows=1, cols=4)
+    heading_cells = table.rows[0].cells
+    heading_cells[0].text = 'Purpose'
+    heading_cells[1].text = 'Paid By'
+    heading_cells[2].text = 'Time'
+    heading_cells[3].text = 'Amount'
+
+    for expense in expense_list:
+        cells = table.add_row().cells
+        cells[0].text = expense.purpose
+        cells[1].text = expense.paidby
+        cells[2].text = str(expense.timestamp)
+        cells[3].text = expense.currency.abbr +' '+str(expense.amount)
+
+    #download_bills(expense_list)
+    document.save(str(track.chat.chat_id)+'_'+str(track.id)+'.docx')
+
+
+def download_bills(expense_list):
+    url_list = []
+    for expense in expense_list:
+        ul = Bill.objects.filter(expense = expense)
+        url_list = url_list + ul
+    print url_list
