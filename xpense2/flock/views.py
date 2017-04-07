@@ -3,6 +3,7 @@ from django.http import HttpResponse,Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_exempt
 from csp.decorators import csp_update
+from datetime import timedelta
 import secret,action
 import json
 
@@ -27,12 +28,14 @@ def events(request):
             return HttpResponse("OK")
         if(pjson['name']=='app.uninstall'):
             action.appUninstall(pjson)
+            return HttpResponse("OK")
     except:
         raise Http404("(-__-) 404!")
 
 # Configuration URL
 def config(request):
     context = {
+        'user_count':User.objects.all().count(),
     }
     return render(request, 'flock/config.html', context)
 
@@ -243,7 +246,24 @@ def track(request):
     if trackObj.budget != 0:
         context['budget'] = trackObj.budget
 
+
+
     expense_list = Expense.objects.filter(track = trackObj)
+
+    #handling TIMEZONE
+    user = User.objects.get(userId=userId)
+    flock_client = FlockClient(token=user.token, app_id=secret.getAppID)
+    pjson = flock_client.get_user_info()
+    utc = str(pjson['timezone'])
+    hours = int(utc[1:3])
+    minutes = int(utc[4:6])
+    if(utc[0]=='+'):
+        for expense in expense_list:
+            expense.timestamp += timedelta(hours=hours,minutes=minutes)
+    else:
+        for expense in expense_list:
+            expense.timestamp -= timedelta(hours=hours,minutes=minutes)
+
     total_expense_by_curr,converted_total,perc_spent = action.total(expense_list,trackObj)
     context['expense_list'] = expense_list
     context['total_expense'] = total_expense_by_curr
@@ -381,12 +401,56 @@ def bill(request):
     print url_list
     return HttpResponse('ok')
 
+
+@csp_update(FRAME_SRC='self')
+@xframe_options_exempt
 def report(request):
     chat_id = request.POST['chat_id']
     userId = request.POST['userId']
     chat_name = request.POST['chat_name']
     username = request.POST['username']
     track_id = request.POST['track']
+
     trackObj = Track.objects.get(id = track_id)
-    action.report(trackObj)
-    return HttpResponse('ok')
+    file_src = action.report(trackObj,userId)
+    context = {
+        'file_src' : file_src,
+        'track_name': trackObj.name,
+    }
+    context['userId'] = userId
+    context['chat_id'] = chat_id
+    context['chat_name'] = chat_name
+    context['username'] = username
+
+    return render(request, 'flock/report.html', context)
+
+def sendreport(request):
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    track_name = request.POST['track_name']
+    filename = request.POST['filename']
+    print userId
+
+    user = User.objects.get(userId=userId)
+    flock_client = FlockClient(token=user.token, app_id=secret.getAppID)
+
+    d = Download(src="http://www.xpense.com/"+filename)
+    views = Views()
+    views.add_flockml("<flockml>Download the <i>"+track_name+" report</i></flockml>")
+    # NOTE: downloads is always a list
+    attachment = Attachment(title="Test files", downloads=[d], views=views)
+    files_message = Message(to=chat_id, attachments = [attachment])
+    res = flock_client.send_chat(files_message)
+    print(res)
+    return HttpResponse('OK')
+
+def deleteexpense(request):
+    chat_id = request.POST['chat_id']
+    userId = request.POST['userId']
+    chat_name = request.POST['chat_name']
+    username = request.POST['username']
+    expense = request.POST['expense']
+    Expense.objects.get(id = expense).delete()
+    return HttpResponse('OK')

@@ -5,7 +5,11 @@ import urllib2
 import urllib
 from docx import Document
 import time
+from docx.shared import Inches
+import os
+from datetime import timedelta
 
+from django.core.files import File
 
 #FlockOS
 from pyflock import FlockClient, verify_event_token
@@ -97,7 +101,7 @@ def fetchMessagePictures(group_id,token,uids):
     return src_list
 
 
-def report(track):
+def report(track,userId):
     document = Document()
     document.add_heading('Expense Report - '+ str(track.name))
 
@@ -107,6 +111,20 @@ def report(track):
 
     status = status + 'Report date: '+str(now)+'\n'
     expense_list = Expense.objects.filter(track = track)
+
+    user = User.objects.get(userId=userId)
+    flock_client = FlockClient(token=user.token, app_id=secret.getAppID)
+    pjson = flock_client.get_user_info()
+    utc = str(pjson['timezone'])
+    hours = int(utc[1:3])
+    minutes = int(utc[4:6])
+    if(utc[0]=='+'):
+        for expense in expense_list:
+            expense.timestamp += timedelta(hours=hours,minutes=minutes)
+    else:
+        for expense in expense_list:
+            expense.timestamp -= timedelta(hours=hours,minutes=minutes)
+
     total_expense_by_curr,converted_total,perc_spent = total(expense_list,track)
 
     if track.budget != 0:
@@ -135,13 +153,32 @@ def report(track):
         cells[2].text = str(expense.timestamp)
         cells[3].text = expense.currency.abbr +' '+str(expense.amount)
 
-    #download_bills(expense_list)
-    document.save(str(track.chat.chat_id)+'_'+str(track.id)+'.docx')
+    filename = 'media/'+str(track.chat.chat_id[2:])+'_'+str(track.id)+'.docx'
+    download_bills(expense_list,document)
+
+    document.save(filename)
+    django_file = File(open(filename,'r'))
+    print (django_file.name)
+    return django_file
 
 
-def download_bills(expense_list):
+
+def download_bills(expense_list,document):
     url_list = []
     for expense in expense_list:
         ul = Bill.objects.filter(expense = expense)
-        url_list = url_list + ul
+        for u in ul:
+            url_list.append(str(u.url))
     print url_list
+    if(len(url_list)):
+        document.add_page_break()
+        file_list = []
+        for url in url_list:
+            f = open(url[33:],'wb')
+            f.write(urllib.urlopen(url).read())
+            f.close()
+            file_list.append(url[33:])
+
+        for fil in file_list:
+            document.add_picture(fil,width=Inches(6.0))
+            os.remove(fil)

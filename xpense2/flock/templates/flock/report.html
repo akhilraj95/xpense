@@ -1,0 +1,77 @@
+<html>
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+  <!-- Compiled and minified JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
+  <script src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
+
+
+  <script>
+  function myFunction() {
+    var http = new XMLHttpRequest();
+    var url = "sendreport";
+    var chat_id=encodeURIComponent(document.getElementById("chat_id").value);
+    var userId=encodeURIComponent(document.getElementById("userId").value);
+    var chat_name=encodeURIComponent(document.getElementById("chat_name").value);
+    var username=encodeURIComponent(document.getElementById("username").value);
+    var filename=encodeURIComponent(document.getElementById("filename").value);
+    var track_name=encodeURIComponent(document.getElementById("track_name").value);
+    var csrfmiddlewaretoken = encodeURIComponent(document.getElementsByName("csrfmiddlewaretoken")[0].value);
+    var parameters="chat_id="+chat_id+"&userId="+userId+"&chat_name="+chat_name+"&username="+username+"&csrfmiddlewaretoken="+csrfmiddlewaretoken+"&filename="+filename+"&track_name="+track_name;
+
+    http.open("POST", url, true);
+    //Send the proper header information along with the request
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    http.setRequestHeader("Content-length", parameters.length);
+    http.setRequestHeader("Connection", "close");
+
+    http.onreadystatechange = function() {//Call a function when the state changes.
+      if(http.readyState == 4 && http.status == 200) {
+        flock.close();
+      }
+    }
+    http.send(parameters);
+  }
+  </script>
+
+</head>
+<body>
+  <br/>
+    {% csrf_token %}
+    <div class="container">
+        <div class="row">
+          <div class="col s12 m6">
+              <p class="flow-text"><b>Start a new track</b></p>
+              <input name="chat_id" id="chat_id" value='{{chat_id}}' type="hidden"/>
+              <input name="userId" id="userId" value='{{userId}}' type="hidden"/>
+              <input name="chat_name" id="chat_name" value='{{chat_name}}' type="hidden"/>
+              <input name="username" id="username" value='{{username}}' type="hidden"/>
+              <input name="filename" id="filename" value='{{file_src}}' type="hidden"/>
+              <input name="track_name" id="track_name" value='{{track_name}}' type="hidden"/>
+              <a href="/{{ file_src.name }}">Download the report</a>
+              <br/>
+              <br/>
+              <br/>
+              <button onclick="myFunction(); this.disabled=true; this.value='Sending';">Send to Group</button>
+          </div>
+          <div class="col s12 m6">
+            <p class="flow-text"><b>Your Report doesn't download?</b></p>
+            <p class="flow-text">
+              Send the report to the group by chat instead.
+            </p>
+          </div>
+        </div>
+    </div>
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js'></script>
+  <script>
+    $(document).ready(function() {
+      $('select').material_select();
+    });
+  </script>
+</body>
+</html>

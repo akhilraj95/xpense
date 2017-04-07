@@ -1,4 +1,6 @@
 from django.conf.urls import url
+from django.conf import settings
+from django.conf.urls.static import static
 
 from . import views
 
@@ -27,4 +29,9 @@ urlpatterns = [
     url(r'^bill$', views.bill, name='bill'),
     #flock handling report request
     url(r'^report$', views.report, name='report'),
+    #flock handling report request
+    url(r'^sendreport$', views.sendreport, name='sendreport'),
+    #flock delete report
+    url(r'^deleteexpense$', views.deleteexpense, name='deleteexpense'),
+
 ]
